@@ -7,5 +7,6 @@ include_directories( include )
 set (CMAKE_CXX_FLAGS "-Wall")
 
 add_executable( auxiliar
-                src/Auxiliar.cpp
+                #src/Auxiliar.cpp
+                src/Sequencial.cpp
                 )

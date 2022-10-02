@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[4]) {
     fstream arquivo_matriz1, arquivo_matriz2;
     arquivo_matriz1.open("../data/matriz1.txt", ios::app);
     arquivo_matriz2.open("../data/matriz2.txt", ios::app);
@@ -33,4 +33,5 @@ int main(int argc, char* argv[]) {
     }
     arquivo_matriz2.close();
     
+    return 0;
 }
