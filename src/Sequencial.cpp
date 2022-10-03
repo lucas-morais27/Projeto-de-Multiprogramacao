@@ -19,17 +19,16 @@ vector<vector<int>> cria_matriz(string arquivo_entrada) {
     linha_coluna >> n_linha;
     linha_coluna >> n_coluna;
 
-    int auxiliar;
-
     //Cria a matriz.
     for (int i = 0; i < n_linha; i++) {
         getline(arquivo_matriz, linha);
         stringstream numeros(linha);
         vector<int> linha_inteiros; //Recebe todos os números de cada linha.
+        string item;
         for (int j = 0; j < n_coluna; j++) {
-            numeros << linha;
-            numeros >> auxiliar; //Transforma de string para inteiro.
-            linha_inteiros.push_back(auxiliar);
+            while (getline(numeros, item, ' ')) {
+                linha_inteiros.push_back(stoi(item));
+            }
         }
         matriz.push_back(linha_inteiros);
     }
@@ -45,7 +44,7 @@ int main(int argc, char *argv[2]) {
     vector<vector<int>> matriz2 = cria_matriz(argv[2]);
     vector<int> linha;
 
-    //Inicia cálculo do tempo
+    //Inicia cálculo do tempo.
     chrono::steady_clock::time_point inicio = chrono::steady_clock::now();
 
     //Multiplica as matrizes.

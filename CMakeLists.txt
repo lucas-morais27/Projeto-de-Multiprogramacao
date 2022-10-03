@@ -1,12 +1,16 @@
-set( CMAKE_CXX_COMPILER "C:/msys64/mingw64/bin/g++.exe" )
-set( CMAKE_C_COMPILER "C:/msys64/mingw64/bin/gcc.exe" )
 cmake_minimum_required(VERSION 3.5)
-project(auxiliar)
+
+project(processos-threads)
 
 include_directories( include )
-set (CMAKE_CXX_FLAGS "-Wall")
 
 add_executable( auxiliar
-                #src/Auxiliar.cpp
-                src/Sequencial.cpp
-                )
+                src/Auxiliar.cpp)
+add_executable( sequencial
+                src/Sequencial.cpp)
+add_executable( processos
+                src/Processos.cpp)
+add_executable( threads
+                src/Threads.cpp)
+                
+target_link_libraries(threads pthread)
