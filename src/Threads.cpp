@@ -62,6 +62,8 @@ void* implementacao_threads(void *i){
     vector<int> produto;  //!<Vetor dos produtos dos elementos da thread atual
     
     const int linhas_matriz1 = matriz1.size();
+    const int colunas_matriz1 = matriz1[0].size();
+    const int linhas_matriz2 = matriz2.size();
     const int colunas_matriz2 = matriz2[0].size();
 
     int pos_inicial = ((int)(size_t)i) * P;  //!<Posição atual na matriz produto
@@ -82,32 +84,36 @@ void* implementacao_threads(void *i){
 
     comeco = chrono::steady_clock::now();
     while(linha != linha_final || coluna != coluna_final){
-        produto.push_back(0);
-        for(int i=0; i<matriz1[0].size(); i++)
-            produto[produto.size()-1] += matriz1[linha][i] * matriz2[i][coluna];
-        
-        linha++;
-        if(coluna >= colunas_matriz2){
-            coluna =0;
-            linha++;
+        int soma_elementos = 0;
+
+        for(int c = 0; c < colunas_matriz1; c++){ // Percorre as colunas da matriz 1
+            for(int l = 0; l < linhas_matriz2; l++){ // Percorre as linhas da matriz 2
+                soma_elementos += matriz1[linha][c] * matriz2[coluna][l];
+            }
         }
+        
+        matriz_resultado[linha][coluna] = soma_elementos;
+
+        linha++;
+        if(coluna >= colunas_matriz2) coluna = 0;
     }
+
     chrono::steady_clock::time_point fim = chrono::steady_clock::now();  //!<Tempo final da thread atual
     int tempo = chrono::duration_cast<chrono::milliseconds>(fim - comeco).count();  //!<Tempo total da execução da thread atual
     
     //Escrita
-    linha = pos_inicial / matriz2[0].size();
-    coluna = pos_inicial % matriz2[0].size();
+    linha = pos_inicial / colunas_matriz2;
+    coluna = pos_inicial % colunas_matriz2;
 
-    fstream thread_arquivo;
-    thread_arquivo.open("../data/thread_"+to_string(pos_inicial/P)+".txt", ios::app);
+    ofstream thread_arquivo("../data/thread_"+to_string(pos_inicial/P)+".txt");
+
+    while(linha != linha_final || coluna != coluna_final){
+        thread_arquivo<<"c"<<linha+1<<"x"<<coluna+1<<" "<<matriz_resultado[linha][coluna]<<endl;
     
-    for(int i=0; i<produto.size(); i++, coluna++){
-        thread_arquivo<<"c"<<linha+1<<"x"<<coluna+1<<" "<<produto[i]<<endl;
         if(coluna >= matriz2[0].size()){
             coluna=0;
             linha++;
-        }
+        }    
     }
     thread_arquivo<<tempo;
     thread_arquivo.close();
