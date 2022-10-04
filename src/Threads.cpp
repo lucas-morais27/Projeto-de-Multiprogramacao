@@ -1,145 +1,117 @@
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <chrono>
+#include <vector>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 using namespace std;
 
-vector< vector <int>> matriz1;  //!<Matriz 1 
-vector< vector <int>> matriz2;  //!<Matriz 2  
-vector<vector<int>> matriz_resultado; 
+vector<vector<int>> matriz1;
+vector<vector<int>> matriz2;
+int P;
+chrono::steady_clock::time_point inicio;
+chrono::steady_clock::time_point fim;
 
-int P;  //!<Número de elementos por thread
-chrono::steady_clock::time_point comeco;  //!<Tempo inicial das threads 
+vector<vector<int>> cria_matriz(string arquivo_entrada) {
+    vector<vector<int>> matriz;
+    int n_linha, n_coluna;
+    string linha;
+    ifstream arquivo_matriz(arquivo_entrada);
 
-/*! Constroi matriz via dados de arquivo de texto.
-    \param string Nome do endereço do arquivo de texto com dados da matriz. 
-    \return Matriz de inteiros. 
-*/  
-vector< vector <int>> buildMatriz(string arq){
-    vector< vector <int>> matriz;
-    int n,m;
-    int aux;
-    string linha_str;
+    //Pega as dimensões da matriz.
+    getline(arquivo_matriz, linha);
+    stringstream linha_coluna(linha);
+    linha_coluna >> n_linha;
+    linha_coluna >> n_coluna;
 
-    ifstream arquivo("../data/"+arq+".txt");
-    getline(arquivo, linha_str);
-    stringstream dimensao(linha_str);  
-    dimensao >> n;    
-    dimensao >> m;
-
-    for(int i=0; i<n; i++){
-        getline(arquivo, linha_str);
-        stringstream elemento_ss(linha_str);
-        vector<int> linha_int;
-        for(int j=0; j<m; j++){
-            elemento_ss << linha_str;
-            elemento_ss >> aux;
-            linha_int.push_back(aux);
+    //Cria a matriz.
+    for (int i = 0; i < n_linha; i++) {
+        getline(arquivo_matriz, linha);
+        stringstream numeros(linha);
+        vector<int> linha_inteiros; //Recebe todos os números de cada linha.
+        string item;
+        for (int j = 0; j < n_coluna; j++) {
+            while (getline(numeros, item, ' ')) {
+                linha_inteiros.push_back(stoi(item));
+            }
         }
-        matriz.push_back(linha_int);
+        matriz.push_back(linha_inteiros);
     }
-    arquivo.close();
+    arquivo_matriz.close();
     
     return matriz;
 }
 
-void definir_matriz_vazia(vector<vector<int>> matriz, int linhas, int colunas){
-    matriz.reserve(linhas);
+void * i_threads(void *i){
+    int posicao = ((int)(size_t)i) * P;
+    int thread_atual = posicao / P;
+    int linha_i = posicao / matriz2[0].size(); //Linha da posição atual.
+    int linha_f = (posicao + P) / matriz2[0].size(); //Linha da última posição.
+    int coluna_i = posicao % matriz2[0].size(); //Coluna da posição atual
+    int coluna_f = (posicao + P) % matriz2[0].size(); //Coluna da última posição.
 
-    for(int l = 0; l < linhas; l++){
-        matriz.push_back(vector<int>(colunas));
+    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca dos índices.
+    if (posicao + P >= matriz1.size() * matriz2[0].size()){ 
+        linha_f = (matriz1.size() * matriz2[0].size()) / matriz2[0].size();
+        coluna_f = (matriz1.size() * matriz2[0].size()) % matriz2[0].size();
     }
-}
-
-void* implementacao_threads(void *i){
-    vector<int> produto;  //!<Vetor dos produtos dos elementos da thread atual
     
-    const int linhas_matriz1 = matriz1.size();
-    const int colunas_matriz1 = matriz1[0].size();
-    const int linhas_matriz2 = matriz2.size();
-    const int colunas_matriz2 = matriz2[0].size();
-
-    int pos_inicial = ((int)(size_t)i) * P;  //!<Posição atual na matriz produto
-    int pos_final = (((int)(size_t) i) + 1) * P - 1;
-
-    int linha = pos_inicial / colunas_matriz2;  //!<Linha da posição atual
-    int coluna  = pos_inicial % colunas_matriz2;  //!<Coluna da posição atual
-
-    int linha_final = (pos_final + P) / colunas_matriz2;  //!<Linha da ultima posição da thread atual
-    int coluna_final = (pos_final + P) % colunas_matriz2;  //!<Coluna da ultima posição da thread atual
-
-    if(pos_final > linhas_matriz1 * colunas_matriz2){
-        linha_final = linhas_matriz1 - 1;
-        coluna_final = colunas_matriz2 - 1;
-    }
-
-    //Multiplicação das matrizes
-
-    comeco = chrono::steady_clock::now();
-    while(linha != linha_final || coluna != coluna_final){
-        int soma_elementos = 0;
-
-        for(int c = 0; c < colunas_matriz1; c++){ // Percorre as colunas da matriz 1
-            for(int l = 0; l < linhas_matriz2; l++){ // Percorre as linhas da matriz 2
-                soma_elementos += matriz1[linha][c] * matriz2[coluna][l];
-            }
+    vector<int> resultado; //Vetor auxiliar para guardar as multiplicações da thread atual.
+    //Multiplica as matrizes.
+    while(linha_i != linha_f || coluna_i != coluna_f){
+        resultado.push_back(0);
+        for (int i = 0; i < matriz1[linha_i].size(); i++) {
+            resultado[resultado.size()-1] += matriz1[linha_i][i] * matriz2[i][coluna_i];
         }
-        
-        matriz_resultado[linha][coluna] = soma_elementos;
-
-        linha++;
-        if(coluna >= colunas_matriz2) coluna = 0;
+        coluna_i++;
+        if (coluna_i >= matriz2[0].size()){
+            coluna_i = 0;
+            linha_i++;
+        }
     }
+    //Fim de cálculo do tempo.
+    fim = chrono::steady_clock::now();
 
-    chrono::steady_clock::time_point fim = chrono::steady_clock::now();  //!<Tempo final da thread atual
-    int tempo = chrono::duration_cast<chrono::milliseconds>(fim - comeco).count();  //!<Tempo total da execução da thread atual
-    
-    //Escrita
-    linha = pos_inicial / colunas_matriz2;
-    coluna = pos_inicial % colunas_matriz2;
+    linha_i = posicao / matriz2[0].size();
+    coluna_i = posicao % matriz2[0].size();
 
-    ofstream thread_arquivo("../data/thread_"+to_string(pos_inicial/P)+".txt");
-
-    while(linha != linha_final || coluna != coluna_final){
-        thread_arquivo<<"c"<<linha+1<<"x"<<coluna+1<<" "<<matriz_resultado[linha][coluna]<<endl;
-    
-        if(coluna >= matriz2[0].size()){
-            coluna=0;
-            linha++;
-        }    
+    //Escreve o resultado de cada multiplicação.
+    ofstream arquivo_processo("../data/thread" + to_string(thread_atual) + ".txt");
+    for (int i = 0; i < resultado.size(); i++, coluna_i++){
+        arquivo_processo << "c" << linha_i + 1 << coluna_i + 1 << " " << resultado[i]<<endl;
+        if (coluna_i >= matriz2[0].size() - 1){
+            coluna_i = -1;
+            linha_i++;
+        }
     }
-    thread_arquivo<<tempo;
-    thread_arquivo.close();
-
+    
+    int tempo = chrono::duration_cast<chrono::milliseconds>(fim - inicio).count();  
+    arquivo_processo << tempo;
+    arquivo_processo.close();
     pthread_exit(NULL);
 }
 
-int main(int argc, char *argv[]){
-    matriz1 = buildMatriz(argv[1]);
-    matriz2 = buildMatriz(argv[2]);
-    definir_matriz_vazia(matriz_resultado, matriz1.size(), matriz2[0].size());
-
+int main(int argc, char *argv[3]){
+    matriz1 = cria_matriz(argv[1]);  
+    matriz2 = cria_matriz(argv[2]);
     P = atoi(argv[3]);
-    
-    int NTHREADS = (matriz1.size() * matriz2[0].size() )/P;  //!<Quantidade de threads a ser usadas em esse programa
-    if((matriz1.size() * matriz2[0].size())%P != 0)//se P não divide a quantidade de elementos da matriz produto
-        NTHREADS++;
+    int n_threads = (matriz1.size() * matriz2[0].size()) / P; 
+    if ((matriz1.size() * matriz2[0].size()) % P != 0) { n_threads++; }
+    pthread_t threads[n_threads]; //Vetor com a quantidade de threads necessários.
 
-    pthread_t threads[NTHREADS];  //!<Vetor dos IDs das threads
-    
-    //comeco = chrono::steady_clock::now();
-    for(int i=0; i<NTHREADS; i++)
-        pthread_create(&threads[i], NULL, implementacao_threads, (void*)(size_t)(i));
+    //Inicia cálculo do tempo.
+    inicio = chrono::steady_clock::now();
+    for (int i = 0; i < n_threads; i++){
+        pthread_create(&threads[i], NULL, i_threads, (void*)(size_t)(i));
+    }
 
-    for(int i=0; i<NTHREADS; i++)
+    for (int i = 0; i < n_threads; i++){
         pthread_join(threads[i], NULL);
+    }
 
     return 0;
 }
