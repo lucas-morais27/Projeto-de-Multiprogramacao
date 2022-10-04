@@ -54,12 +54,6 @@ void * i_threads(void *i){
     int coluna_i = posicao % matriz2[0].size(); //Coluna da posição atual
     int coluna_f = (posicao + P) % matriz2[0].size(); //Coluna da última posição.
 
-    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca dos índices.
-    if (posicao + P >= matriz1.size() * matriz2[0].size()){ 
-        linha_f = (matriz1.size() * matriz2[0].size()) / matriz2[0].size();
-        coluna_f = (matriz1.size() * matriz2[0].size()) % matriz2[0].size();
-    }
-    
     vector<int> resultado; //Vetor auxiliar para guardar as multiplicações da thread atual.
     //Multiplica as matrizes.
     while(linha_i != linha_f || coluna_i != coluna_f){
@@ -108,7 +102,7 @@ int main(int argc, char *argv[3]){
     for (int i = 0; i < n_threads; i++){
         pthread_create(&threads[i], NULL, i_threads, (void*)(size_t)(i));
     }
-
+    
     for (int i = 0; i < n_threads; i++){
         pthread_join(threads[i], NULL);
     }

@@ -50,11 +50,12 @@ void i_processos(int P, int posicao, vector<vector<int>> matriz1, vector<vector<
     int coluna_i = posicao % matriz2[0].size(); //Coluna da posição atual
     int coluna_f = (posicao + P) % matriz2[0].size(); //Coluna da última posição.
 
-    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca do índices.
+    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca do índices.0
     if (posicao + P >= matriz1.size() * matriz2[0].size()){ 
         linha_f = (matriz1.size() * matriz2[0].size()) / matriz2[0].size();
         coluna_f = (matriz1.size() * matriz2[0].size()) % matriz2[0].size();
     }
+    
     
     vector<int> resultado; //Vetor auxiliar para guardar as multiplicações do processo atual.
     //Multiplica as matrizes.
