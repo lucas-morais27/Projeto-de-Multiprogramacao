@@ -10,10 +10,11 @@
 
 using namespace std;
 
+//Variáveis globais.
 vector<vector<int>> matriz1;
 vector<vector<int>> matriz2;
-int P;
-chrono::steady_clock::time_point inicio;
+int P; //Quantidade de elementos por thread.
+chrono::steady_clock::time_point inicio; 
 chrono::steady_clock::time_point fim;
 
 vector<vector<int>> cria_matriz(string arquivo_entrada) {
@@ -54,7 +55,7 @@ void * i_threads(void *i){
     int coluna_i = posicao % matriz2[0].size(); //Coluna da posição atual
     int coluna_f = (posicao + P) % matriz2[0].size(); //Coluna da última posição.
 
-    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca dos índices.
+    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca do índice.
     if (posicao + P >= matriz1.size() * matriz2[0].size()){ 
         linha_f = (matriz1.size() * matriz2[0].size()) / matriz2[0].size();
         coluna_f = (matriz1.size() * matriz2[0].size()) % matriz2[0].size();
@@ -88,7 +89,8 @@ void * i_threads(void *i){
             linha_i++;
         }
     }
-    
+
+    //Calculo do tempo.
     int tempo = chrono::duration_cast<chrono::milliseconds>(fim - inicio).count();  
     arquivo_processo << tempo;
     arquivo_processo.close();
@@ -98,10 +100,10 @@ void * i_threads(void *i){
 int main(int argc, char *argv[3]){
     matriz1 = cria_matriz(argv[1]);  
     matriz2 = cria_matriz(argv[2]);
-    P = atoi(argv[3]);
-    int n_threads = (matriz1.size() * matriz2[0].size()) / P; 
+    P = atoi(argv[3]); //Quantidade de elementos por thread.
+    int n_threads = (matriz1.size() * matriz2[0].size()) / P; //Quantidade de threads.
     if ((matriz1.size() * matriz2[0].size()) % P != 0) { n_threads++; }
-    pthread_t threads[n_threads]; //Vetor com a quantidade de threads necessários.
+    pthread_t threads[n_threads]; //Vetor com as threads necessárias.
 
     //Inicia cálculo do tempo.
     inicio = chrono::steady_clock::now();

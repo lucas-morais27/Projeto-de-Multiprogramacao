@@ -50,12 +50,11 @@ void i_processos(int P, int posicao, vector<vector<int>> matriz1, vector<vector<
     int coluna_i = posicao % matriz2[0].size(); //Coluna da posição atual
     int coluna_f = (posicao + P) % matriz2[0].size(); //Coluna da última posição.
 
-    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca do índices.0
+    //Verifica se ainda existe um nº de elementos menor ou igual que P e efetua a troca do índice.
     if (posicao + P >= matriz1.size() * matriz2[0].size()){ 
         linha_f = (matriz1.size() * matriz2[0].size()) / matriz2[0].size();
         coluna_f = (matriz1.size() * matriz2[0].size()) % matriz2[0].size();
     }
-    
     
     vector<int> resultado; //Vetor auxiliar para guardar as multiplicações do processo atual.
     //Multiplica as matrizes.
@@ -85,7 +84,8 @@ void i_processos(int P, int posicao, vector<vector<int>> matriz1, vector<vector<
             linha_i++;
         }
     }
-    
+
+    //Calculo do tempo.
     int tempo = chrono::duration_cast<chrono::milliseconds>(fim - inicio).count();  
     arquivo_processo << tempo;
     arquivo_processo.close();
@@ -94,10 +94,10 @@ void i_processos(int P, int posicao, vector<vector<int>> matriz1, vector<vector<
 int main(int argc, char *argv[3]){
     vector<vector<int>> matriz1 = cria_matriz(argv[1]);  
     vector<vector<int>> matriz2 = cria_matriz(argv[2]);
-    int P = atoi(argv[3]);
-    int n_processos = (matriz1.size() * matriz2[0].size()) / P; 
+    int P = atoi(argv[3]); //Quantidade de elementos por processo.
+    int n_processos = (matriz1.size() * matriz2[0].size()) / P; //Quantidade de processos.
     if ((matriz1.size() * matriz2[0].size()) % P != 0) { n_processos++; }
-    pid_t processos[n_processos]; //Vetor com a quantidade de processos necessários.
+    pid_t processos[n_processos]; //Vetor com os processos necessários.
 
     //Inicia cálculo do tempo.
     inicio = chrono::steady_clock::now();
